@@ -38,14 +38,24 @@ is bundled or required.
 ## Quick Start
 
 Requirements: Docker Engine with Compose, and one host directory containing the
-inbox and output paths.
+inbox and output paths. The published image supports `linux/amd64` and
+`linux/arm64`.
 
 ```bash
 git clone https://github.com/ylongw/sony-camera-inbox-organizer.git
 cd sony-camera-inbox-organizer
 mkdir -p runtime/config runtime/data/inbox
 cp config.example.yaml runtime/config/config.yaml
-docker compose up -d --build
+docker compose pull
+docker compose up -d
+```
+
+The default image is
+`ghcr.io/ylongw/sony-camera-inbox-organizer:latest`. To test a local build:
+
+```bash
+docker build -t sony-camera-inbox-organizer:local .
+IMAGE=sony-camera-inbox-organizer:local docker compose up -d
 ```
 
 Open `http://NAS-IP:8080`. The Web UI and the worker both read

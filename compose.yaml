@@ -1,8 +1,6 @@
 services:
   sony-camera-inbox:
-    image: sony-camera-inbox-organizer:local
-    build:
-      context: .
+    image: "${IMAGE:-ghcr.io/ylongw/sony-camera-inbox-organizer:latest}"
     container_name: sony-camera-inbox-organizer
     restart: unless-stopped
     user: "${PUID:-1000}:${PGID:-1000}"

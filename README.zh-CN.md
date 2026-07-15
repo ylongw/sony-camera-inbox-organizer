@@ -35,14 +35,23 @@ JPEG 使用程序生成的 102 字节确定性 Apple MakerNote，不需要用户
 
 ## 快速开始
 
-需要 Docker Engine 和 Docker Compose。
+需要 Docker Engine 和 Docker Compose。发布镜像同时支持 `linux/amd64` 和
+`linux/arm64`。
 
 ```bash
 git clone https://github.com/ylongw/sony-camera-inbox-organizer.git
 cd sony-camera-inbox-organizer
 mkdir -p runtime/config runtime/data/inbox
 cp config.example.yaml runtime/config/config.yaml
-docker compose up -d --build
+docker compose pull
+docker compose up -d
+```
+
+默认镜像为 `ghcr.io/ylongw/sony-camera-inbox-organizer:latest`。本地开发构建可使用：
+
+```bash
+docker build -t sony-camera-inbox-organizer:local .
+IMAGE=sony-camera-inbox-organizer:local docker compose up -d
 ```
 
 浏览器打开 `http://NAS-IP:8080`。Web UI 与 Worker 读取同一个
