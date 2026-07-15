@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}设置 · Sony Camera Inbox Organizer{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div><h1>设置</h1><p class="path">所有修改写入同一份 YAML</p></div>
+</section>
+{% if request.query_params.get('saved') %}<div class="notice success">配置已保存</div>{% endif %}
+{% if error %}<div class="notice error">{{ error }}</div>{% endif %}
+{% for item in path_errors %}<div class="notice warning">{{ item }}</div>{% endfor %}
+
+<form class="settings-form" method="post" action="/settings">
+  <fieldset>
+    <legend>目录</legend>
+    <label>输入目录<input name="input_path" value="{{ form_config.paths.input }}" required></label>
+    <label>输出目录<input name="output_path" value="{{ form_config.paths.output }}" required></label>
+    <label>暂存目录<input name="staging_path" value="{{ form_config.paths.staging }}" required></label>
+    <label>原片保留目录<input name="retention_path" value="{{ form_config.paths.retention }}" required></label>
+    <label>重复文件目录<input name="duplicates_path" value="{{ form_config.paths.duplicates }}" required></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>扫描</legend>
+    <label class="toggle"><input type="checkbox" name="automatic_enabled" {% if form_config.automation.enabled %}checked{% endif %}><span>自动扫描</span></label>
+    <label class="toggle"><input type="checkbox" name="recursive" {% if form_config.automation.recursive %}checked{% endif %}><span>递归子目录</span></label>
+    <div class="field-grid">
+      <label>轮询间隔（秒）<input type="number" step="0.5" min="0.5" name="poll_seconds" value="{{ form_config.automation.poll_seconds }}"></label>
+      <label>稳定检测次数<input type="number" min="1" name="stable_cycles" value="{{ form_config.automation.stable_cycles }}"></label>
+      <label>最小文件年龄（秒）<input type="number" step="0.5" min="0" name="minimum_age_seconds" value="{{ form_config.automation.minimum_age_seconds }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>输出</legend>
+    <label class="toggle"><input type="checkbox" name="organize_regular_media" {% if form_config.organization.organize_regular_media %}checked{% endif %}><span>分拣普通照片和视频</span></label>
+    <label class="toggle"><input type="checkbox" name="live_photo_enabled" {% if form_config.live_photo.enabled %}checked{% endif %}><span>转换 Shot Mark 视频</span></label>
+    <label class="toggle"><input type="checkbox" name="sort_by_capture_date" {% if form_config.organization.sort_by_capture_date %}checked{% endif %}><span>按拍摄日期分拣</span></label>
+    <label>日期目录格式<input name="date_pattern" value="{{ form_config.organization.date_pattern }}"></label>
+    <div class="field-grid">
+      <label>时长（秒）<input type="number" step="0.5" min="1" max="10" name="duration_seconds" value="{{ form_config.live_photo.duration_seconds }}"></label>
+      <label>视频高度<input type="number" min="480" max="2160" name="height" value="{{ form_config.live_photo.height }}"></label>
+      <label>帧率<input type="number" min="15" max="60" name="fps" value="{{ form_config.live_photo.fps }}"></label>
+      <label>CRF<input type="number" min="0" max="40" name="crf" value="{{ form_config.live_photo.crf }}"></label>
+      <label>编码预设<select name="preset">
+        {% for preset in ['ultrafast','superfast','veryfast','faster','fast','medium','slow'] %}<option {% if form_config.live_photo.preset == preset %}selected{% endif %}>{{ preset }}</option>{% endfor %}
+      </select></label>
+      <label>编码线程<input type="number" min="1" max="32" name="video_threads" value="{{ form_config.live_photo.video_threads }}"></label>
+      <label>音频码率<input name="audio_bitrate" value="{{ form_config.live_photo.audio_bitrate }}"></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>原片</legend>
+    <label>处理方式<select name="original_action">
+      <option value="archive" {% if form_config.originals.action == 'archive' %}selected{% endif %}>保留后自动清理</option>
+      <option value="keep" {% if form_config.originals.action == 'keep' %}selected{% endif %}>保留在输入目录</option>
+    </select></label>
+    <label>保留天数<input type="number" min="1" max="3650" name="retention_days" value="{{ form_config.originals.retention_days }}"></label>
+  </fieldset>
+
+  <fieldset>
+    <legend>发布钩子</legend>
+    <label>命令<input name="hook_command" value="{{ form_config.hooks.after_publish|join(' ') }}"></label>
+    <label>超时（秒）<input type="number" min="1" max="3600" name="hook_timeout_seconds" value="{{ form_config.hooks.timeout_seconds }}"></label>
+  </fieldset>
+  <div class="form-actions"><button class="button primary" type="submit">保存设置</button></div>
+</form>
+{% endblock %}

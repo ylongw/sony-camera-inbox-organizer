@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}任务 · Sony Camera Inbox Organizer{% endblock %}
+{% block content %}
+<section class="page-head">
+  <div>
+    <h1>转换任务</h1>
+    <p class="path">{{ config.paths.input }} → {{ config.paths.output }}</p>
+  </div>
+  <button class="button primary" id="scan-now" type="button">
+    <span aria-hidden="true">▶</span><span>立即扫描</span>
+  </button>
+</section>
+
+<section class="status-grid" aria-label="运行状态">
+  <div class="metric">
+    <span class="metric-label">Worker</span>
+    <strong id="worker-state" class="state state-{{ worker.state }}">{{ worker.state }}</strong>
+  </div>
+  <div class="metric">
+    <span class="metric-label">自动扫描</span>
+    <strong id="automatic-state">{{ "开启" if config.automation.enabled else "关闭" }}</strong>
+  </div>
+  <div class="metric">
+    <span class="metric-label">最近扫描</span>
+    <strong id="last-scan">{{ worker.last_scan_at or "尚未运行" }}</strong>
+  </div>
+  <div class="metric">
+    <span class="metric-label">当前文件</span>
+    <strong id="current-file" title="{{ worker.current_file or '' }}">{{ worker.current_file or "无" }}</strong>
+  </div>
+</section>
+
+<div id="runtime-error" class="notice error {% if not worker.last_error %}hidden{% endif %}">
+  {{ worker.last_error or "" }}
+</div>
+
+<section class="section-head">
+  <h2>最近任务</h2>
+  <button class="icon-button" id="refresh-jobs" type="button" title="刷新任务" aria-label="刷新任务">↻</button>
+</section>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>状态</th><th>源文件</th><th>标记</th><th>耗时</th><th>完成时间</th><th></th>
+      </tr>
+    </thead>
+    <tbody id="jobs-body">
+      {% for job in jobs %}
+      <tr>
+        <td><span class="badge badge-{{ job.status }}">{{ job.status }}</span></td>
+        <td class="file-cell" title="{{ job.source_path }}">{{ job.source_path }}</td>
+        <td>{{ job.marks }}</td>
+        <td>{{ "%.1fs"|format(job.elapsed_seconds) if job.elapsed_seconds is not none else "-" }}</td>
+        <td>{{ job.finished_at or job.started_at or "-" }}</td>
+        <td>
+          {% if job.status == "failed" %}
+          <button class="icon-button retry-job" data-job-id="{{ job.id }}" title="重试" aria-label="重试">↻</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% if job.error or job.message %}
+      <tr class="detail-row"><td></td><td colspan="5">{{ job.error or job.message }}</td></tr>
+      {% endif %}
+      {% else %}
+      <tr><td class="empty" colspan="6">暂无任务</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,19 @@
+services:
+  sony-camera-inbox:
+    image: sony-camera-inbox-organizer:local
+    build:
+      context: .
+    container_name: sony-camera-inbox-organizer
+    restart: unless-stopped
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      TZ: "${TZ:-Asia/Shanghai}"
+      CONFIG_PATH: /config/config.yaml
+      STATE_PATH: /config/state.sqlite
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+    volumes:
+      - ./runtime/config:/config
+      - ./runtime/data:/data
+    security_opt:
+      - no-new-privileges:true

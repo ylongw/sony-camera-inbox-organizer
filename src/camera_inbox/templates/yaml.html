@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}YAML · Sony Camera Inbox Organizer{% endblock %}
+{% block content %}
+<section class="page-head"><div><h1>YAML</h1><p class="path">{{ config.paths.input }}</p></div></section>
+{% if request.query_params.get('saved') %}<div class="notice success">YAML 已保存</div>{% endif %}
+{% if error %}<div class="notice error">{{ error }}</div>{% endif %}
+<form method="post" action="/yaml">
+  <textarea class="yaml-editor" name="yaml_text" spellcheck="false">{{ yaml_text }}</textarea>
+  <div class="form-actions"><button class="button primary" type="submit">保存 YAML</button></div>
+</form>
+{% endblock %}

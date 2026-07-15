@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Sony Camera Inbox Organizer{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/app.css') }}">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="/">
+          <span class="brand-mark">CI</span>
+          <span>Sony Camera Inbox Organizer</span>
+        </a>
+        <nav aria-label="主导航">
+          <a class="nav-link {% if request.url.path == '/' %}active{% endif %}" href="/">任务</a>
+          <a class="nav-link {% if request.url.path == '/settings' %}active{% endif %}" href="/settings">设置</a>
+          <a class="nav-link {% if request.url.path == '/yaml' %}active{% endif %}" href="/yaml">YAML</a>
+        </nav>
+      </div>
+    </header>
+    <main class="shell">
+      {% block content %}{% endblock %}
+    </main>
+    <footer class="footer">v{{ version }}</footer>
+    <script src="{{ url_for('static', path='/app.js') }}" defer></script>
+  </body>
+</html>

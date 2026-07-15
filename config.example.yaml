@@ -1,0 +1,32 @@
+schema_version: 1
+paths:
+  input: /data/inbox
+  output: /data/photos
+  staging: /data/.sony-camera-inbox-staging
+  retention: /data/.sony-camera-inbox-retention
+  duplicates: /data/.sony-camera-inbox-duplicates
+automation:
+  enabled: true
+  recursive: false
+  poll_seconds: 2.0
+  stable_cycles: 3
+  minimum_age_seconds: 4.0
+organization:
+  organize_regular_media: true
+  sort_by_capture_date: true
+  date_pattern: "%Y/%m/%d"
+live_photo:
+  enabled: true
+  duration_seconds: 3.0
+  height: 1080
+  fps: 30
+  crf: 18
+  preset: veryfast
+  video_threads: 2
+  audio_bitrate: 192k
+originals:
+  action: archive
+  retention_days: 30
+hooks:
+  after_publish: []
+  timeout_seconds: 60
