@@ -168,6 +168,21 @@ hooks:
 账号、Token 和私有 SDK 应保留在仓库外。若相册软件原生监控输出目录，钩子保持空数组
 即可。
 
+## 镜像发布
+
+正式镜像统一由 GitHub-hosted runner 构建，不使用维护者电脑构建后上传。普通 commit 和
+Pull Request 只运行测试及不推送的镜像构建。维护者需要明确选择一个版本进行发布：
+
+1. 在 GitHub 打开 **Actions > Publish container > Run workflow**。
+2. 在 `source_ref` 中填写 branch、tag 或 commit SHA。
+3. 保持 `publish_latest` 开启，即可更新快速开始使用的镜像。
+4. 可选在 `release_tag` 中填写 `0.2.0` 这样的版本号。
+
+工作流会构建 `linux/amd64` 和 `linux/arm64`，把同一镜像推送到 Docker Hub 和
+GHCR，增加不可变的 `sha-xxxxxxx` 标签，并检查发布清单确实包含两个平台。仓库需要配置
+`DOCKERHUB_USERNAME` 和 `DOCKERHUB_TOKEN`。普通 commit 不会自动发布，也不会覆盖
+`latest`。
+
 ## 开发
 
 只有源码开发或本地构建镜像才需要克隆 GitHub 仓库：

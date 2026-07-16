@@ -1,41 +1,97 @@
 name: Publish container
+run-name: Publish ${{ inputs.source_ref }} to container registries
 
 on:
   workflow_dispatch:
-  push:
-    tags: ["v*"]
+    inputs:
+      source_ref:
+        description: Branch, tag, or commit SHA to build
+        required: true
+        default: main
+        type: string
+      publish_latest:
+        description: Update the latest tag
+        required: true
+        default: true
+        type: boolean
+      release_tag:
+        description: Optional additional tag, for example 0.2.0
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: publish-container
+  cancel-in-progress: false
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - name: Validate publish options
+        env:
+          PUBLISH_LATEST: ${{ inputs.publish_latest }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          if [[ "$PUBLISH_LATEST" != "true" && -z "$RELEASE_TAG" ]]; then
+            echo "Select latest or provide an additional release tag." >&2
+            exit 1
+          fi
+          if [[ -n "$RELEASE_TAG" && ! "$RELEASE_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "release_tag must look like 0.2.0 or 0.2.0-rc.1." >&2
+            exit 1
+          fi
+
+      - name: Check out selected source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+
+      - name: Resolve source revision
+        id: source
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "short_sha=$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+
       - uses: docker/setup-qemu-action@v3
       - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/login-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - id: meta
+
+      - name: Generate image metadata
+        id: meta
         uses: docker/metadata-action@v5
         with:
           images: |
             ghcr.io/${{ github.repository }}
             docker.io/ylongwang/sony-camera-inbox-organizer
           tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-      - uses: docker/build-push-action@v6
+            type=raw,value=latest,enable=${{ inputs.publish_latest }}
+            type=raw,value=${{ inputs.release_tag }},enable=${{ inputs.release_tag != '' }}
+            type=raw,value=sha-${{ steps.source.outputs.short_sha }}
+          labels: |
+            org.opencontainers.image.revision=${{ steps.source.outputs.sha }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+
+      - name: Build and push multi-platform image
+        id: build
+        uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
@@ -44,3 +100,30 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Verify published platforms
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          docker buildx imagetools inspect \
+            "docker.io/ylongwang/sony-camera-inbox-organizer@$DIGEST" \
+            | tee manifest.txt
+          grep -q "Platform:.*linux/amd64" manifest.txt
+          grep -q "Platform:.*linux/arm64" manifest.txt
+
+      - name: Write job summary
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          {
+            echo "## Container published"
+            echo
+            echo "- Source: \`$SOURCE_SHA\`"
+            echo "- Digest: \`$DIGEST\`"
+            echo "- Platforms: \`linux/amd64\`, \`linux/arm64\`"
+            echo
+            echo '```bash'
+            echo 'docker pull docker.io/ylongwang/sony-camera-inbox-organizer:latest'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
