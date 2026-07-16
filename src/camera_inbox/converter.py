@@ -78,7 +78,7 @@ def _write_image_metadata(
             "-overwrite_original",
             "-all=",
             "-Make=Apple",
-            "-Orientation=1",
+            "-Orientation#=1",
             f"-DateTimeOriginal={timestamp}",
             f"-CreateDate={timestamp}",
             f"-ModifyDate={timestamp}",
