@@ -1,10 +1,14 @@
 schema_version: 1
+# These are container paths. MEDIA_ROOT from .env is mounted at /data.
 paths:
-  input: /data/inbox
-  output: /data/photos
-  staging: /data/.sony-camera-inbox-staging
-  retention: /data/.sony-camera-inbox-retention
-  duplicates: /data/.sony-camera-inbox-duplicates
+  # Point the camera FTP task or manual copy workflow at this inbox.
+  input: /data/PhotoInbox/sony-camera
+  # Processed media is organized below this directory as YYYY/MM/DD.
+  output: /data/Photos/01_memories/sony
+  # Working, retained-original, and duplicate files stay outside Photos.
+  staging: /data/PhotoInbox/.staging/sony-camera
+  retention: /data/PhotoInbox/.retention/shotmark-originals
+  duplicates: /data/PhotoInbox/.duplicates/sony-camera
 automation:
   enabled: true
   recursive: false

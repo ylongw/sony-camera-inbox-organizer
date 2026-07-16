@@ -37,42 +37,84 @@ is bundled or required.
 
 ## Quick Start
 
-Requirements: Docker Engine with Compose, and one host directory containing the
-inbox and output paths. The published image supports `linux/amd64` and
-`linux/arm64`.
+Requirements: Docker Engine with Compose. The prebuilt Docker Hub image supports
+`linux/amd64` and `linux/arm64`.
+
+### Option 1: Pull the image (recommended)
+
+Docker Compose is the standard deployment method. This path does not compile
+anything locally.
+
+#### 1. Prepare the deployment files
 
 ```bash
 git clone https://github.com/ylongw/sony-camera-inbox-organizer.git
 cd sony-camera-inbox-organizer
-mkdir -p runtime/config runtime/data/inbox
+cp .env.example .env
+mkdir -p runtime/config runtime/data/PhotoInbox/sony-camera
 cp config.example.yaml runtime/config/config.yaml
-docker compose pull
-docker compose up -d
 ```
 
-The default image is
-`ghcr.io/ylongw/sony-camera-inbox-organizer:latest`. To test a local build:
+#### 2. Pull the prebuilt image
+
+```bash
+docker compose pull
+```
+
+This pulls `docker.io/ylongwang/sony-camera-inbox-organizer:latest` by default.
+
+#### 3. Deploy the container
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+#### 4. Open the Web UI
+
+Open **`http://NAS-IP:18088`** after the container starts. For example, if the
+NAS address is `192.168.1.20`, open `http://192.168.1.20:18088`.
+
+| Port | Default | Purpose |
+| --- | --- | --- |
+| Host Web port | `18088` | The port entered in the browser |
+| Container port | `8080` | Internal only; Compose maps the host port to it |
+
+To use another host port, change `WEB_PORT=18088` in `.env`, then run
+`docker compose up -d` again. You normally should not edit the container port.
+
+For the included relative-path setup, copy or upload camera files into
+`runtime/data/PhotoInbox/sony-camera`. On a NAS, edit `.env` and set
+`MEDIA_ROOT` to an absolute host directory shared by the inbox and photo
+library. Set `PUID` and `PGID` to the owner of that directory. The YAML paths do
+not change because `MEDIA_ROOT` is always mounted into the container as `/data`.
+
+The default layout is ready to use:
+
+| Purpose | Container path | Host path below `MEDIA_ROOT` |
+| --- | --- | --- |
+| Camera FTP/manual inbox | `/data/PhotoInbox/sony-camera` | `PhotoInbox/sony-camera` |
+| Organized photo library | `/data/Photos/01_memories/sony/YYYY/MM/DD` | `Photos/01_memories/sony/YYYY/MM/DD` |
+| Conversion staging | `/data/PhotoInbox/.staging/sony-camera` | `PhotoInbox/.staging/sony-camera` |
+| 30-day marked originals | `/data/PhotoInbox/.retention/shotmark-originals` | `PhotoInbox/.retention/shotmark-originals` |
+| Duplicate quarantine | `/data/PhotoInbox/.duplicates/sony-camera` | `PhotoInbox/.duplicates/sony-camera` |
+
+Only the inbox must exist before startup. The worker creates the other managed
+directories. Point the camera FTP task at the host-side inbox path.
+
+### Option 2: Build from source
+
+Advanced users can build the same image from the checked-out source and select
+it through the same Compose file:
 
 ```bash
 docker build -t sony-camera-inbox-organizer:local .
 IMAGE=sony-camera-inbox-organizer:local docker compose up -d
 ```
 
-Open `http://NAS-IP:8080`. The Web UI and the worker both read
+The Web UI and the worker both read
 `runtime/config/config.yaml`. Web changes are written atomically; direct YAML
 edits appear in the Web UI on the next page load.
-
-For a real NAS, mount one common parent into `/data` instead of mounting the
-inbox and output separately:
-
-```yaml
-volumes:
-  - /your/nas/media-root:/data
-  - /your/app-config:/config
-```
-
-Then set paths such as `/data/PhotoInbox/camera` and `/data/Photos/camera` in
-the Web UI. Run the container as the UID/GID that owns those directories.
 
 ## Processing Rules
 
@@ -93,7 +135,19 @@ PNG, AVI, M4V, MOV, MP4, and MTS.
 
 ## Configuration
 
-`config.example.yaml` is the complete schema. Important switches:
+`config.example.yaml` is the complete schema. Its path defaults are usable as
+written when `MEDIA_ROOT` is mounted at `/data`:
+
+```yaml
+paths:
+  input: /data/PhotoInbox/sony-camera
+  output: /data/Photos/01_memories/sony
+  staging: /data/PhotoInbox/.staging/sony-camera
+  retention: /data/PhotoInbox/.retention/shotmark-originals
+  duplicates: /data/PhotoInbox/.duplicates/sony-camera
+```
+
+Important switches:
 
 ```yaml
 automation:

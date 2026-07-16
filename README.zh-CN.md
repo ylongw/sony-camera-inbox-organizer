@@ -35,40 +35,80 @@ JPEG 使用程序生成的 102 字节确定性 Apple MakerNote，不需要用户
 
 ## 快速开始
 
-需要 Docker Engine 和 Docker Compose。发布镜像同时支持 `linux/amd64` 和
-`linux/arm64`。
+需要 Docker Engine 和 Docker Compose。Docker Hub 预构建镜像同时支持
+`linux/amd64` 和 `linux/arm64`。
+
+### 方案一：直接拉取镜像（推荐）
+
+项目将 Docker Compose 作为标准部署方式，此方案不需要在 NAS 上编译。
+
+#### 1. 准备部署文件
 
 ```bash
 git clone https://github.com/ylongw/sony-camera-inbox-organizer.git
 cd sony-camera-inbox-organizer
-mkdir -p runtime/config runtime/data/inbox
+cp .env.example .env
+mkdir -p runtime/config runtime/data/PhotoInbox/sony-camera
 cp config.example.yaml runtime/config/config.yaml
-docker compose pull
-docker compose up -d
 ```
 
-默认镜像为 `ghcr.io/ylongw/sony-camera-inbox-organizer:latest`。本地开发构建可使用：
+#### 2. 拉取预构建镜像
+
+```bash
+docker compose pull
+```
+
+默认拉取 `docker.io/ylongwang/sony-camera-inbox-organizer:latest`。
+
+#### 3. 部署并启动容器
+
+```bash
+docker compose up -d
+docker compose ps
+```
+
+#### 4. 打开 Web 管理页面
+
+容器启动后打开 **`http://NAS-IP:18088`**。例如 NAS 地址是
+`192.168.1.20`，则访问 `http://192.168.1.20:18088`。
+
+| 端口 | 默认值 | 用途 |
+| --- | --- | --- |
+| 宿主机 Web 端口 | `18088` | 浏览器实际访问的端口 |
+| 容器内部端口 | `8080` | 仅在容器内部使用，由 Compose 映射 |
+
+如需修改浏览器访问端口，在 `.env` 中修改 `WEB_PORT=18088`，然后再次执行
+`docker compose up -d`。通常不需要修改容器内部端口。
+
+使用仓库内的相对路径时，把相机照片上传或复制到
+`runtime/data/PhotoInbox/sony-camera`。在 NAS 上部署时，在 `.env` 中把
+`MEDIA_ROOT` 改成 Inbox 和照片库共同的宿主机根目录，并把 `PUID`、`PGID` 改成该
+目录所有者。`MEDIA_ROOT` 始终挂载为容器内的 `/data`，因此通常不用修改 YAML 路径。
+
+默认目录已经给出完整命名：
+
+| 用途 | 容器内路径 | `MEDIA_ROOT` 下的宿主机路径 |
+| --- | --- | --- |
+| 相机 FTP/手动导入 Inbox | `/data/PhotoInbox/sony-camera` | `PhotoInbox/sony-camera` |
+| 整理后的照片库 | `/data/Photos/01_memories/sony/YYYY/MM/DD` | `Photos/01_memories/sony/YYYY/MM/DD` |
+| 转换暂存 | `/data/PhotoInbox/.staging/sony-camera` | `PhotoInbox/.staging/sony-camera` |
+| 带标记原片保留 30 天 | `/data/PhotoInbox/.retention/shotmark-originals` | `PhotoInbox/.retention/shotmark-originals` |
+| 重复文件隔离 | `/data/PhotoInbox/.duplicates/sony-camera` | `PhotoInbox/.duplicates/sony-camera` |
+
+启动前只需要确保 Inbox 存在，其余托管目录由程序创建。相机 FTP 任务应填写宿主机
+一侧的 Inbox 路径。
+
+### 方案二：从源码构建
+
+高级用户可以从当前源码构建本地镜像，再通过同一份 Compose 启动：
 
 ```bash
 docker build -t sony-camera-inbox-organizer:local .
 IMAGE=sony-camera-inbox-organizer:local docker compose up -d
 ```
 
-浏览器打开 `http://NAS-IP:8080`。Web UI 与 Worker 读取同一个
-`runtime/config/config.yaml`：网页修改会原子写回；直接编辑 YAML 后，重新打开页面
-即可看到新值。
-
-部署到 NAS 时，建议把同一个媒体根目录挂载为 `/data`，不要把 Inbox、输出和暂存
-目录分别挂成不同文件系统：
-
-```yaml
-volumes:
-  - /你的/NAS/媒体根目录:/data
-  - /你的/应用配置目录:/config
-```
-
-然后在 Web 中配置 `/data/PhotoInbox/camera`、`/data/Photos/camera` 等路径，并让
-容器使用这些目录所有者的 UID/GID 运行。
+Web UI 与 Worker 读取同一个 `runtime/config/config.yaml`：网页修改会原子写回；
+直接编辑 YAML 后，重新打开页面即可看到新值。
 
 ## 分支逻辑
 
@@ -85,7 +125,19 @@ volumes:
 
 ## 配置
 
-完整结构见 `config.example.yaml`。主要开关：
+完整结构见 `config.example.yaml`。当 `MEDIA_ROOT` 挂载为 `/data` 时，默认路径可以
+直接使用：
+
+```yaml
+paths:
+  input: /data/PhotoInbox/sony-camera
+  output: /data/Photos/01_memories/sony
+  staging: /data/PhotoInbox/.staging/sony-camera
+  retention: /data/PhotoInbox/.retention/shotmark-originals
+  duplicates: /data/PhotoInbox/.duplicates/sony-camera
+```
+
+主要开关：
 
 ```yaml
 automation:

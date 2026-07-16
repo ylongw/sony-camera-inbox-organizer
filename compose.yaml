@@ -1,6 +1,6 @@
 services:
   sony-camera-inbox:
-    image: "${IMAGE:-ghcr.io/ylongw/sony-camera-inbox-organizer:latest}"
+    image: "${IMAGE:-docker.io/ylongwang/sony-camera-inbox-organizer:latest}"
     container_name: sony-camera-inbox-organizer
     restart: unless-stopped
     user: "${PUID:-1000}:${PGID:-1000}"
@@ -9,9 +9,9 @@ services:
       CONFIG_PATH: /config/config.yaml
       STATE_PATH: /config/state.sqlite
     ports:
-      - "${WEB_PORT:-8080}:8080"
+      - "${WEB_PORT:-18088}:8080"
     volumes:
-      - ./runtime/config:/config
-      - ./runtime/data:/data
+      - "${CONFIG_DIR:-./runtime/config}:/config"
+      - "${MEDIA_ROOT:-./runtime/data}:/data"
     security_opt:
       - no-new-privileges:true

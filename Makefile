@@ -7,4 +7,4 @@ image:
 	docker build -t sony-camera-inbox-organizer:local .
 
 run:
-	docker compose up -d --build
+	IMAGE=sony-camera-inbox-organizer:local docker compose up -d

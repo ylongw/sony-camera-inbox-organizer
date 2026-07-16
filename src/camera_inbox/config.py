@@ -17,11 +17,11 @@ class StrictModel(BaseModel):
 
 
 class PathsConfig(StrictModel):
-    input: Path = Path("/data/inbox")
-    output: Path = Path("/data/live-photos")
-    staging: Path = Path("/data/.sony-camera-inbox-staging")
-    retention: Path = Path("/data/.sony-camera-inbox-retention")
-    duplicates: Path = Path("/data/.sony-camera-inbox-duplicates")
+    input: Path = Path("/data/PhotoInbox/sony-camera")
+    output: Path = Path("/data/Photos/01_memories/sony")
+    staging: Path = Path("/data/PhotoInbox/.staging/sony-camera")
+    retention: Path = Path("/data/PhotoInbox/.retention/shotmark-originals")
+    duplicates: Path = Path("/data/PhotoInbox/.duplicates/sony-camera")
 
 
 class AutomationConfig(StrictModel):

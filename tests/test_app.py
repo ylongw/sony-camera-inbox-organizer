@@ -31,4 +31,5 @@ def test_web_pages_and_manual_scan_endpoint(tmp_path):
     with TestClient(create_app(config_path, tmp_path / "state.sqlite", start_worker=False)) as client:
         for path in ("/", "/settings", "/yaml", "/api/status", "/health"):
             assert client.get(path).status_code == 200
+        assert "https://github.com/ylongw/sony-camera-inbox-organizer" in client.get("/").text
         assert client.post("/api/scan").status_code == 202

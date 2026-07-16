@@ -14,15 +14,19 @@ button, input, select, textarea { font: inherit; letter-spacing: 0; }
 .brand { color: #17211e; text-decoration: none; font-weight: 700; display: flex; align-items: center; gap: 10px; white-space: nowrap; }
 .brand-mark { width: 32px; height: 32px; display: grid; place-items: center; background: #146c56; color: white; border-radius: 6px; font-size: 12px; }
 nav { display: flex; align-self: stretch; }
+.topbar-actions { display: flex; align-items: center; align-self: stretch; gap: 8px; }
 .nav-link { display: grid; place-items: center; min-width: 68px; padding: 0 14px; text-decoration: none; color: #5a6561; border-bottom: 2px solid transparent; }
 .nav-link:hover, .nav-link.active { color: #146c56; border-bottom-color: #146c56; }
+.github-link { width: 34px; height: 34px; display: grid; place-items: center; color: #33413c; border: 1px solid #c8d0cd; border-radius: 6px; background: #fff; }
+.github-link:hover { color: #146c56; border-color: #8bb7aa; }
+.github-link svg { width: 18px; height: 18px; fill: currentColor; }
 .shell { max-width: 1180px; margin: 0 auto; padding: 30px 24px 48px; }
 .page-head, .section-head { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .page-head { margin-bottom: 24px; }
 h1 { font-size: 25px; line-height: 1.2; margin: 0 0 6px; }
 h2 { font-size: 17px; margin: 0; }
 .path { margin: 0; color: #69746f; overflow-wrap: anywhere; }
-.button { min-height: 38px; border: 1px solid #b9c3bf; border-radius: 6px; padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; justify-content: center; }
+.button { min-height: 38px; border: 1px solid #b9c3bf; border-radius: 6px; padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; justify-content: center; white-space: nowrap; }
 .button.primary { background: #146c56; color: #fff; border-color: #146c56; }
 .button:hover { filter: brightness(.96); }
 .button:disabled { opacity: .55; cursor: wait; }
@@ -72,6 +76,7 @@ input:focus, select:focus, textarea:focus { outline: 2px solid #87bfae; outline-
 @media (max-width: 800px) {
   .topbar-inner { padding: 0 14px; gap: 8px; }
   .brand span:last-child { display: none; }
+  .topbar-actions { gap: 2px; }
   .nav-link { min-width: 56px; padding: 0 8px; }
   .shell { padding: 22px 14px 36px; }
   .page-head { align-items: flex-start; }
