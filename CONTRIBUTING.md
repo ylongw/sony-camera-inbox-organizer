@@ -8,7 +8,7 @@
    user's Live Photo as a compatibility template.
 
 Container publishing is intentionally manual. Run the `Publish container`
-workflow, select the branch, tag, or commit SHA to build, and choose whether to
+workflow, select the branch, tag, or full/short commit SHA to build, and choose whether to
 update `latest` or attach an additional release tag. Publishing to Docker Hub
 requires repository secrets named `DOCKERHUB_USERNAME` and
 `DOCKERHUB_TOKEN`; never place these values in files. Ordinary pushes and pull

@@ -191,7 +191,7 @@ computer. Ordinary commits and pull requests only run tests and a non-pushing
 image build. A maintainer publishes a selected revision explicitly:
 
 1. Open **Actions > Publish container > Run workflow** on GitHub.
-2. Enter a branch, tag, or commit SHA in `source_ref`.
+2. Enter a branch, tag, or full/short commit SHA in `source_ref`.
 3. Leave `publish_latest` enabled to update the image used by Quick Start.
 4. Optionally enter a version such as `0.2.0` in `release_tag`.
 

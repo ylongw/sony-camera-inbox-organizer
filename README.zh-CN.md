@@ -174,7 +174,7 @@ hooks:
 Pull Request 只运行测试及不推送的镜像构建。维护者需要明确选择一个版本进行发布：
 
 1. 在 GitHub 打开 **Actions > Publish container > Run workflow**。
-2. 在 `source_ref` 中填写 branch、tag 或 commit SHA。
+2. 在 `source_ref` 中填写 branch、tag、完整或短 commit SHA。
 3. 保持 `publish_latest` 开启，即可更新快速开始使用的镜像。
 4. 可选在 `release_tag` 中填写 `0.2.0` 这样的版本号。
 

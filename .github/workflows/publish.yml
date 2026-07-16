@@ -47,10 +47,24 @@ jobs:
             exit 1
           fi
 
-      - name: Check out selected source
+      - name: Check out repository history
         uses: actions/checkout@v7
         with:
-          ref: ${{ inputs.source_ref }}
+          fetch-depth: 0
+
+      - name: Select source revision
+        env:
+          SOURCE_REF: ${{ inputs.source_ref }}
+        run: |
+          if git rev-parse --verify --quiet "$SOURCE_REF^{commit}" >/dev/null; then
+            revision="$SOURCE_REF"
+          elif git rev-parse --verify --quiet "origin/$SOURCE_REF^{commit}" >/dev/null; then
+            revision="origin/$SOURCE_REF"
+          else
+            echo "Cannot resolve source_ref: $SOURCE_REF" >&2
+            exit 1
+          fi
+          git checkout --detach "$revision"
 
       - name: Resolve source revision
         id: source

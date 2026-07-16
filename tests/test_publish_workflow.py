@@ -26,4 +26,6 @@ def test_container_publish_pushes_and_verifies_both_platforms():
     assert "platforms: linux/amd64,linux/arm64" in text
     assert "push: true" in text
     assert "Verify published platforms" in text
+    assert "fetch-depth: 0" in text
+    assert 'git checkout --detach "$revision"' in text
     assert "type=raw,value=sha-${{ steps.source.outputs.short_sha }}" in text
