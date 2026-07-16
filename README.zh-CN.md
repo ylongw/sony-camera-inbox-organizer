@@ -35,80 +35,67 @@ JPEG 使用程序生成的 102 字节确定性 Apple MakerNote，不需要用户
 
 ## 快速开始
 
-需要 Docker Engine 和 Docker Compose。Docker Hub 预构建镜像同时支持
-`linux/amd64` 和 `linux/arm64`。
-
-### 方案一：直接拉取镜像（推荐）
-
-项目将 Docker Compose 作为标准部署方式，此方案不需要在 NAS 上编译。
-
-#### 1. 准备部署文件
+需要 Docker Engine 和 Docker Compose。首次启动不需要 Git、不需要本地编译，也不需要
+提前准备应用 YAML。普通用户在 NAS 或 Linux 主机上复制并执行下面整段命令即可：
 
 ```bash
-git clone https://github.com/ylongw/sony-camera-inbox-organizer.git
-cd sony-camera-inbox-organizer
-cp .env.example .env
-mkdir -p runtime/config runtime/data/PhotoInbox/sony-camera
-cp config.example.yaml runtime/config/config.yaml
-```
+mkdir -p sony-camera-inbox/config sony-camera-inbox/data/PhotoInbox/sony-camera
+cd sony-camera-inbox
 
-#### 2. 拉取预构建镜像
+cat > compose.yaml <<'YAML'
+services:
+  sony-camera-inbox:
+    image: docker.io/ylongwang/sony-camera-inbox-organizer:latest
+    container_name: sony-camera-inbox-organizer
+    restart: unless-stopped
+    user: "${PUID:-1000}:${PGID:-1000}"
+    environment:
+      TZ: "${TZ:-UTC}"
+      CONFIG_PATH: /config/config.yaml
+      STATE_PATH: /config/state.sqlite
+    ports:
+      - "18088:8080"
+    volumes:
+      - ./config:/config
+      - ./data:/data
+    security_opt:
+      - no-new-privileges:true
+YAML
 
-```bash
+printf 'PUID=%s\nPGID=%s\nTZ=%s\n' "$(id -u)" "$(id -g)" "${TZ:-UTC}" > .env
 docker compose pull
-```
-
-默认拉取 `docker.io/ylongwang/sony-camera-inbox-organizer:latest`。
-
-#### 3. 部署并启动容器
-
-```bash
 docker compose up -d
 docker compose ps
 ```
 
-#### 4. 打开 Web 管理页面
+然后打开 **`http://NAS-IP:18088`**。例如 NAS 地址是 `192.168.1.20`，则访问
+`http://192.168.1.20:18088`。在这套默认部署中，浏览器始终使用 **18088**；
+`8080` 只是容器内部端口，不需要、也不应该直接访问。
 
-容器启动后打开 **`http://NAS-IP:18088`**。例如 NAS 地址是
-`192.168.1.20`，则访问 `http://192.168.1.20:18088`。
+程序首次启动会自动生成 `config/config.yaml`。网页打开后，再通过“设置”页面或 YAML
+页面修改分拣路径和功能开关。默认目录可以立即使用：
 
-| 端口 | 默认值 | 用途 |
+| 用途 | 宿主机路径 | Web 页面中填写的路径 |
 | --- | --- | --- |
-| 宿主机 Web 端口 | `18088` | 浏览器实际访问的端口 |
-| 容器内部端口 | `8080` | 仅在容器内部使用，由 Compose 映射 |
+| 相机 FTP/手动导入 Inbox | `./data/PhotoInbox/sony-camera` | `/data/PhotoInbox/sony-camera` |
+| 整理后的照片库 | `./data/Photos/01_memories/sony` | `/data/Photos/01_memories/sony` |
+| 带标记原片保留 30 天 | `./data/PhotoInbox/.retention/shotmark-originals` | `/data/PhotoInbox/.retention/shotmark-originals` |
 
-如需修改浏览器访问端口，在 `.env` 中修改 `WEB_PORT=18088`，然后再次执行
-`docker compose up -d`。通常不需要修改容器内部端口。
+把相机 FTP 任务指向宿主机一侧的 Inbox，或者手动复制一个文件进去即可。输出、暂存、
+原片保留和重复文件目录会由程序按需创建。
 
-使用仓库内的相对路径时，把相机照片上传或复制到
-`runtime/data/PhotoInbox/sony-camera`。在 NAS 上部署时，在 `.env` 中把
-`MEDIA_ROOT` 改成 Inbox 和照片库共同的宿主机根目录，并把 `PUID`、`PGID` 改成该
-目录所有者。`MEDIA_ROOT` 始终挂载为容器内的 `/data`，因此通常不用修改 YAML 路径。
+Docker 无法访问容器启动时没有挂载的宿主机目录。如果需要使用 NAS 上已经存在的照片
+根目录，只修改 `compose.yaml` 中第二条 volume，然后重新执行
+`docker compose up -d`：
 
-默认目录已经给出完整命名：
-
-| 用途 | 容器内路径 | `MEDIA_ROOT` 下的宿主机路径 |
-| --- | --- | --- |
-| 相机 FTP/手动导入 Inbox | `/data/PhotoInbox/sony-camera` | `PhotoInbox/sony-camera` |
-| 整理后的照片库 | `/data/Photos/01_memories/sony/YYYY/MM/DD` | `Photos/01_memories/sony/YYYY/MM/DD` |
-| 转换暂存 | `/data/PhotoInbox/.staging/sony-camera` | `PhotoInbox/.staging/sony-camera` |
-| 带标记原片保留 30 天 | `/data/PhotoInbox/.retention/shotmark-originals` | `PhotoInbox/.retention/shotmark-originals` |
-| 重复文件隔离 | `/data/PhotoInbox/.duplicates/sony-camera` | `PhotoInbox/.duplicates/sony-camera` |
-
-启动前只需要确保 Inbox 存在，其余托管目录由程序创建。相机 FTP 任务应填写宿主机
-一侧的 Inbox 路径。
-
-### 方案二：从源码构建
-
-高级用户可以从当前源码构建本地镜像，再通过同一份 Compose 启动：
-
-```bash
-docker build -t sony-camera-inbox-organizer:local .
-IMAGE=sony-camera-inbox-organizer:local docker compose up -d
+```yaml
+    volumes:
+      - ./config:/config
+      - /你的/NAS/媒体根目录:/data
 ```
 
-Web UI 与 Worker 读取同一个 `runtime/config/config.yaml`：网页修改会原子写回；
-直接编辑 YAML 后，重新打开页面即可看到新值。
+Web 页面中仍然填写 `/data/...`；此时 `/data` 就代表该宿主机目录。普通 NAS 用户实际
+只需要选择这一处宿主机路径。
 
 ## 分支逻辑
 
@@ -125,31 +112,42 @@ Web UI 与 Worker 读取同一个 `runtime/config/config.yaml`：网页修改会
 
 ## 配置
 
-完整结构见 `config.example.yaml`。当 `MEDIA_ROOT` 挂载为 `/data` 时，默认路径可以
-直接使用：
+“设置”表单和 YAML 编辑器都会修改 `/config/config.yaml`，只是同一配置的两种视图。
+程序首次启动会自动生成该文件。下面是可以直接参考或复制编辑的完整默认配置：
 
 ```yaml
+schema_version: 1
 paths:
   input: /data/PhotoInbox/sony-camera
   output: /data/Photos/01_memories/sony
   staging: /data/PhotoInbox/.staging/sony-camera
   retention: /data/PhotoInbox/.retention/shotmark-originals
   duplicates: /data/PhotoInbox/.duplicates/sony-camera
-```
-
-主要开关：
-
-```yaml
 automation:
   enabled: true
+  recursive: false
+  poll_seconds: 2.0
+  stable_cycles: 3
+  minimum_age_seconds: 4.0
 organization:
   organize_regular_media: true
   sort_by_capture_date: true
+  date_pattern: "%Y/%m/%d"
 live_photo:
   enabled: true
+  duration_seconds: 3.0
+  height: 1080
+  fps: 30
+  crf: 18
+  preset: veryfast
+  video_threads: 2
+  audio_bitrate: 192k
 originals:
   action: archive
   retention_days: 30
+hooks:
+  after_publish: []
+  timeout_seconds: 60
 ```
 
 “立即扫描”不受 `automation.enabled` 限制。自动模式不会无限重试失败文件；修复源文件
@@ -172,12 +170,25 @@ originals:
 
 ## 开发
 
+只有源码开发或本地构建镜像才需要克隆 GitHub 仓库：
+
 ```bash
+git clone https://github.com/ylongw/sony-camera-inbox-organizer.git
+cd sony-camera-inbox-organizer
 python -m venv .venv
 . .venv/bin/activate
 pip install -e '.[test]'
 pytest
 sony-camera-inbox
+```
+
+通过仓库中的 Compose 文件构建并运行本地镜像：
+
+```bash
+cp .env.example .env
+mkdir -p runtime/config runtime/data/PhotoInbox/sony-camera
+docker build -t sony-camera-inbox-organizer:local .
+IMAGE=sony-camera-inbox-organizer:local docker compose up -d
 ```
 
 真实转换还需要 FFmpeg 和 ExifTool。详见[架构](docs/ARCHITECTURE.md)、
