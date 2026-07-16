@@ -195,9 +195,9 @@ image build. A maintainer publishes a selected revision explicitly:
 3. Leave `publish_latest` enabled to update the image used by Quick Start.
 4. Optionally enter a version such as `0.2.0` in `release_tag`.
 
-The workflow builds `linux/amd64` and `linux/arm64`, pushes the same image to
-Docker Hub and GHCR, adds an immutable `sha-xxxxxxx` tag, and verifies both
-platforms in the published manifest. It requires the repository secrets
+The workflow builds `linux/amd64` and `linux/arm64`, pushes the image to Docker
+Hub, adds an immutable `sha-xxxxxxx` tag, and verifies both platforms in the
+published manifest. It requires the repository secrets
 `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`. A normal commit never publishes or
 overwrites `latest` automatically.
 

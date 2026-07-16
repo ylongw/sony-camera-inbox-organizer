@@ -21,6 +21,9 @@ def test_container_publish_is_manual_and_selects_a_source_revision():
 def test_container_publish_pushes_and_verifies_both_platforms():
     text = ROOT.joinpath(".github/workflows/publish.yml").read_text(encoding="utf-8")
 
+    assert "docker.io/ylongwang/sony-camera-inbox-organizer" in text
+    assert "ghcr.io" not in text
+    assert "packages: write" not in text
     assert "DOCKERHUB_USERNAME" in text
     assert "DOCKERHUB_TOKEN" in text
     assert "platforms: linux/amd64,linux/arm64" in text
